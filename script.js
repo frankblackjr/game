@@ -2,7 +2,6 @@ var myGamePiece;
 var myObstacles = [];
 
 function startGame() {
-  myObstacles = new component(10, 200, "green", 300, 120);
   myGamePiece = new component(30, 30, "#118989", 10, 120);
   myGameArea.start();
 }
@@ -16,14 +15,13 @@ var myGameArea = {
     document.body.insertBefore(this.canvas, document.body.childNodes[0]);
     this.frameNo = 0;
     this.interval = setInterval(updateGameArea, 15);
-    window.addEventListener('keydown', function(e) {
+    window.addEventListener('keydown', function (e) {
       myGameArea.keys = (myGameArea.keys || []);
       myGameArea.keys[e.keyCode] = true;
-    });
-
-    window.addEventListener('keyup', function(e) {
+    })
+    window.addEventListener('keyup', function (e) {
       myGameArea.keys[e.keyCode] = false;
-    });
+    })
   },
   clear: function() {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -31,13 +29,6 @@ var myGameArea = {
   stop: function() {
     clearInterval(this.interval);
   }
-};
-
-function everyinterval(n) {
-  if ((myGameArea.frameNo / n) % 1 == 0) {
-    return true;
-  }
-  return false;
 }
 
 function component(width, height, color, x, y) {
@@ -51,12 +42,11 @@ function component(width, height, color, x, y) {
     ctx = myGameArea.context;
     ctx.fillStyle = color;
     ctx.fillRect(this.x, this.y, this.width, this.height);
-    //quick idea try and make mario with canvas and js
-  };
+  }
   this.newPos = function() {
     this.x += this.speedX;
     this.y += this.speedY;
-  };
+  }
   this.crashWith = function(otherobj) {
     var myleft = this.x;
     var myright = this.x + (this.width);
@@ -73,12 +63,12 @@ function component(width, height, color, x, y) {
       crash = false;
     }
     return crash;
-  };
+  }
 }
 
 function updateGameArea() {
   var x, y;
-  for (var i = 0; i < myObstacles.length; i += 1) {
+  for (i = 0; i < myObstacles.length; i += 1) {
     if (myGamePiece.crashWith(myObstacles[i])) {
       myGameArea.stop();
       return;
@@ -89,13 +79,27 @@ function updateGameArea() {
   myGameArea.frameNo += 1;
   if (myGameArea.frameNo == 1 || everyinterval(150)) {
     x = myGameArea.canvas.width;
-    y = myGameArea.canvas.height - 200;
-    myObstacles.push(new component(10, 200, "green", x, y));
+    minHeight = 20;
+    maxHeight = 200;
+    height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+    minGap = 50;
+    maxGap = 200;
+    gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+    myObstacles.push(new component(10, height, "green", x, 0));
+    myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
   }
-  for (var j = 0; j < myObstacles.length; j++) {
+  for (j = 0; j < myObstacles.length; j += 1) {
     myObstacles[j].x += -1;
     myObstacles[j].update();
   }
+
+  function everyinterval(n) {
+    if ((myGameArea.frameNo / n) % 1 == 0) {
+      return true;
+    }
+    return false;
+  }
+
   myGamePiece.speedX = 0;
   myGamePiece.speedY = 0;
 
