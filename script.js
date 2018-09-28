@@ -1,8 +1,10 @@
 var myGamePiece;
 var myObstacles = [];
+var myScore;
 
 function startGame() {
   myGamePiece = new component(30, 30, "#118989", 10, 120);
+  myScore = new component("30px", "Consolas", "black", 280, 40, "text");
   myGameArea.start();
 }
 
@@ -15,11 +17,11 @@ var myGameArea = {
     document.body.insertBefore(this.canvas, document.body.childNodes[0]);
     this.frameNo = 0;
     this.interval = setInterval(updateGameArea, 15);
-    window.addEventListener('keydown', function (e) {
+    window.addEventListener('keydown', function(e) {
       myGameArea.keys = (myGameArea.keys || []);
       myGameArea.keys[e.keyCode] = true;
     })
-    window.addEventListener('keyup', function (e) {
+    window.addEventListener('keyup', function(e) {
       myGameArea.keys[e.keyCode] = false;
     })
   },
@@ -31,22 +33,41 @@ var myGameArea = {
   }
 }
 
-function component(width, height, color, x, y) {
+function component(width, height, color, x, y, type) {
+  this.type = type;
   this.width = width;
   this.height = height;
   this.speedX = 0;
   this.speedY = 0;
   this.x = x;
   this.y = y;
+  this.gravity = 0.005;
+  this.gravitySpeed = 0;
   this.update = function() {
     ctx = myGameArea.context;
-    ctx.fillStyle = color;
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+    if (this.type == "text") {
+      ctx.font = this.width + " " + this.height;
+      ctx.fillStyle = color;
+      ctx.fillText(this.text, this.x, this.y);
+    } else {
+      ctx.fillStyle = color;
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
   }
   this.newPos = function() {
+    this.gravitySpeed += this.gravity;
     this.x += this.speedX;
-    this.y += this.speedY;
+    this.y += this.speedY += this.gravitySpeed;
+    this.hitBottom();
   }
+
+  this.hitBottom = function() {
+    var rockBottom = myGameArea.canvas.height - this.height;
+    if (this.y > rockBottom) {
+      this.y = rockBottom;
+    }
+  }
+
   this.crashWith = function(otherobj) {
     var myleft = this.x;
     var myright = this.x + (this.width);
@@ -67,7 +88,7 @@ function component(width, height, color, x, y) {
 }
 
 function updateGameArea() {
-  var x, y;
+  var x, height, gap, minHeight, maxHeight, minGap, maxGap;
   for (i = 0; i < myObstacles.length; i += 1) {
     if (myGamePiece.crashWith(myObstacles[i])) {
       myGameArea.stop();
@@ -81,15 +102,16 @@ function updateGameArea() {
     x = myGameArea.canvas.width;
     minHeight = 20;
     maxHeight = 200;
-    height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+    height = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
     minGap = 50;
     maxGap = 200;
-    gap = Math.floor(Math.random()*(maxGap-minGap+1)+minGap);
+    gap = Math.floor(Math.random() * (maxGap - minGap + 1) + minGap);
     myObstacles.push(new component(10, height, "green", x, 0));
     myObstacles.push(new component(10, x - height - gap, "green", x, height + gap));
   }
   for (j = 0; j < myObstacles.length; j += 1) {
     myObstacles[j].x += -1;
+    myObstacles[j].newPos();
     myObstacles[j].update();
   }
 
@@ -115,6 +137,8 @@ function updateGameArea() {
   if (myGameArea.keys && myGameArea.keys[40]) {
     myGamePiece.speedY = 1;
   }
+  myScore.text="SCORE: " + myGameArea.frameNo;
+  myScore.update();
   myGamePiece.newPos();
   myGamePiece.update();
 }
