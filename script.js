@@ -4,6 +4,7 @@ var myScore;
 
 function startGame() {
   myGamePiece = new component(30, 30, "#118989", 10, 120);
+  myGamePiece.gravity = 0.05;
   myScore = new component("30px", "Consolas", "black", 280, 40, "text");
   myGameArea.start();
 }
@@ -20,10 +21,10 @@ var myGameArea = {
     window.addEventListener('keydown', function(e) {
       myGameArea.keys = (myGameArea.keys || []);
       myGameArea.keys[e.keyCode] = true;
-    })
+    });
     window.addEventListener('keyup', function(e) {
       myGameArea.keys[e.keyCode] = false;
-    })
+    });
   },
   clear: function() {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -31,7 +32,9 @@ var myGameArea = {
   stop: function() {
     clearInterval(this.interval);
   }
-}
+};
+
+//COMPONENT
 
 function component(width, height, color, x, y, type) {
   this.type = type;
@@ -41,10 +44,10 @@ function component(width, height, color, x, y, type) {
   this.speedY = 0;
   this.x = x;
   this.y = y;
-  this.gravity = 0.005;
+  this.gravity = 0;
   this.gravitySpeed = 0;
   this.update = function() {
-    ctx = myGameArea.context;
+    let ctx = myGameArea.context;
     if (this.type == "text") {
       ctx.font = this.width + " " + this.height;
       ctx.fillStyle = color;
@@ -57,14 +60,24 @@ function component(width, height, color, x, y, type) {
   this.newPos = function() {
     this.gravitySpeed += this.gravity;
     this.x += this.speedX;
-    this.y += this.speedY += this.gravitySpeed;
+    this.y += this.speedY + this.gravitySpeed;
+    if (this.gravitySpeed <= -3 || this.gravitySpeed >= 5) {
+      this.gravitySpeed = 0;
+    }
     this.hitBottom();
+    this.topColis();
   }
 
   this.hitBottom = function() {
     var rockBottom = myGameArea.canvas.height - this.height;
     if (this.y > rockBottom) {
       this.y = rockBottom;
+    }
+  }
+
+  this.topColis = function() {
+    if (this.y < 0) {
+      this.y = 0;
     }
   }
 
@@ -111,7 +124,6 @@ function updateGameArea() {
   }
   for (j = 0; j < myObstacles.length; j += 1) {
     myObstacles[j].x += -1;
-    myObstacles[j].newPos();
     myObstacles[j].update();
   }
 
@@ -120,6 +132,10 @@ function updateGameArea() {
       return true;
     }
     return false;
+  }
+
+  function accelerate(n) {
+      myGamePiece.gravity = n;
   }
 
   myGamePiece.speedX = 0;
@@ -133,11 +149,16 @@ function updateGameArea() {
   }
   if (myGameArea.keys && myGameArea.keys[38]) {
     myGamePiece.speedY = -1;
+    accelerate(-0.2);
   }
   if (myGameArea.keys && myGameArea.keys[40]) {
     myGamePiece.speedY = 1;
+    accelerate(myGamePiece.gravity += 0.05);
   }
-  myScore.text="SCORE: " + myGameArea.frameNo;
+  if (!myGameArea.keys || !myGameArea.keys[38]) {
+    accelerate(0.03);
+  }
+  myScore.text = "SCORE: " + myGameArea.frameNo;
   myScore.update();
   myGamePiece.newPos();
   myGamePiece.update();
